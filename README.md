@@ -10,6 +10,12 @@ Awsie helps you to do that lookup and call the awscli without any potential for 
 
 ## Installation
 
+Before installing make sure you have the awscli installed as awsie depends on it. We don't install it ourselves so you're able to install the exact version you want to use.
+
+```shell
+pip install awscli
+```
+
 awsie can be installed through pip:
 
 ```shell
@@ -42,10 +48,17 @@ and then want to list the content of the bucket you can use `awsie`:
 awsie example-stack s3 ls s3://cf:DeploymentBucket: --region us-west-1
 ```
 
+or if you want to remove `somefile` from the `DeploymentBucket`:
+
+```shell
+awsie example-stack s3 rm s3://cf:DeploymentBucket:/somefile --region us-west-1
+```
+
 which will replace `cf:DeploymentBucket:` with the actual name of the resource and run the awscli with all arguments you passed to awsie, except for the stack-name (which has to be the first argument):
 
 ```shell
 aws s3 ls s3://formica-example-stack-deploymentbucket-1jjzisylxreh9 --region us-west-1
+aws s3 rm s3://formica-example-stack-deploymentbucket-1jjzisylxreh9/somefile --region us-west-1
 ```
 
 ## Replacement syntax
