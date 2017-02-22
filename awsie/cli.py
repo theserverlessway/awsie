@@ -12,9 +12,12 @@ def main():
 
     stack = arguments.stack
 
-    session = create_session(region=arguments.region, profile=arguments.profile)
-
-    ids = get_resource_ids(session, stack)
+    try:
+        session = create_session(region=arguments.region, profile=arguments.profile)
+        ids = get_resource_ids(session, stack)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
 
     def replacement(matchobject):
         match_name = matchobject.group(1)
