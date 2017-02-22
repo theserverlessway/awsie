@@ -12,7 +12,7 @@ install:
 script:
 - pycodestyle .
 - pyflakes .
-- py.test --cov=awsie tests/unit
+- py.test --cov=awsie tests
 
 after_success:
 - coveralls
