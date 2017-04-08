@@ -54,6 +54,10 @@ def get_resource_ids(session, stack):
         for page in paginator:
             for resource in page['StackResourceSummaries']:
                 ids[resource['LogicalResourceId']] = resource['PhysicalResourceId']
+
+        describe_stack = client.describe_stacks(StackName=stack)
+        for output in describe_stack['Stacks'][0]['Outputs']:
+            ids[output['OutputKey']] = output['OutputValue']
     except botocore.exceptions.ClientError as e:
         print(e)
         sys.exit(1)
