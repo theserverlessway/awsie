@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+docker build -t flomotlik/awsie -f Dockerfile.whalebrew .
+
+whalebrew install -f flomotlik/awsie
