@@ -2,11 +2,11 @@
  
 pronounced /ˈɒzi/ oz-ee like our great friends from down under.
 
-AWSIE is a CloudFormation aware wrapper on top of the AWS cli. It help you to call an awscli command, but instead of the actual physical ID of the resource you set the logical CloudFormation template id which will be replaced then.
+AWSIE is a CloudFormation aware wrapper on top of the AWS CLI. It help you to call an awscli command, but instead of the actual physical ID of the resource you set the logical CloudFormation template id or a CloudFormation Output which will be replaced when executing the actual command.
 
 For many different resources AWS can automatically set a random name when creating the resource through Cloudformation. While this has a big upside with resources not clashing when the same stack gets deployed multipe times, a downside is that running a command against a specific resource means you have to write lookup code or use the resource name by hand.
 
-Awsie helps you to do that lookup and call the awscli without any potential for clashes.
+Awsie helps you to do that lookup and call the awscli without any potential for clashes. By supporting both LogicalIds and Output variables you have a lot of flexibility for your deployment scripts.
 
 ## Installation
 

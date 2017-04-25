@@ -60,7 +60,7 @@ def test_session_creation(mocker, region, profile):
     assert session == cli.Session.return_value
 
 
-def test_loads_resources(mocker, stack):
+def test_loads_resources_and_outputs(mocker, stack):
     session = mocker.Mock(spec=boto3.Session)
     client = session.client.return_value
 
@@ -73,15 +73,62 @@ def test_loads_resources(mocker, stack):
         }]}
         resources_summaries.append(resources)
 
-    client.get_paginator().paginate.return_value = resources_summaries
+    client.get_paginator.return_value.paginate.return_value = resources_summaries
+
+    describe_stack = {
+        'Stacks': [
+            {'Outputs': [
+                {'OutputKey': 'Output_Key_1',
+                 'OutputValue': 'Output_Value_1'},
+                {'OutputKey': 'Output_Key_2',
+                 'OutputValue': 'Output_Value_2'}
+            ],
+            }
+        ]
+    }
+
+    client.describe_stacks.return_value = describe_stack
+
+    ids = cli.get_resource_ids(session=session, stack=stack)
+    assert len(ids) == 4
+    assert ids['LogicalResourceId0'] == 'PhysicalResourceId0'
+    assert ids['LogicalResourceId1'] == 'PhysicalResourceId1'
+    assert ids['Output_Key_1'] == 'Output_Value_1'
+    assert ids['Output_Key_2'] == 'Output_Value_2'
+
+    session.client.assert_called_with('cloudformation')
+    client.get_paginator.assert_called_with('list_stack_resources')
+    client.get_paginator.return_value.paginate.assert_called_with(StackName=stack)
+    client.describe_stacks.assert_called_with(StackName=stack)
+
+
+def test_loads_resources_and_ignores_empty_outputs(mocker, stack):
+    session = mocker.Mock(spec=boto3.Session)
+    client = session.client.return_value
+
+    resources_summaries = []
+    for i in range(2):
+        resources = {'StackResourceSummaries': [{
+            'LogicalResourceId': 'LogicalResourceId' + str(i),
+            'PhysicalResourceId': 'PhysicalResourceId' + str(i)
+
+        }]}
+        resources_summaries.append(resources)
+
+    client.get_paginator.return_value.paginate.return_value = resources_summaries
+
+    describe_stack = {
+        'Stacks': [{}]
+    }
+
+    client.describe_stacks.return_value = describe_stack
 
     ids = cli.get_resource_ids(session=session, stack=stack)
     assert len(ids) == 2
     assert ids['LogicalResourceId0'] == 'PhysicalResourceId0'
     assert ids['LogicalResourceId1'] == 'PhysicalResourceId1'
-    session.client.assert_called_with('cloudformation')
-    client.get_paginator.assert_called_with('list_stack_resources')
-    client.get_paginator.return_value.paginate.assert_called_with(StackName=stack)
+
+    client.describe_stacks.assert_called_with(StackName=stack)
 
 
 def test_main_replaces_and_calls_aws(mocker, stack, sysexit, arguments):
