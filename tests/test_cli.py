@@ -102,6 +102,35 @@ def test_loads_resources_and_outputs(mocker, stack):
     client.describe_stacks.assert_called_with(StackName=stack)
 
 
+def test_loads_resources_and_ignores_empty_outputs(mocker, stack):
+    session = mocker.Mock(spec=boto3.Session)
+    client = session.client.return_value
+
+    resources_summaries = []
+    for i in range(2):
+        resources = {'StackResourceSummaries': [{
+            'LogicalResourceId': 'LogicalResourceId' + str(i),
+            'PhysicalResourceId': 'PhysicalResourceId' + str(i)
+
+        }]}
+        resources_summaries.append(resources)
+
+    client.get_paginator.return_value.paginate.return_value = resources_summaries
+
+    describe_stack = {
+        'Stacks': [{}]
+    }
+
+    client.describe_stacks.return_value = describe_stack
+
+    ids = cli.get_resource_ids(session=session, stack=stack)
+    assert len(ids) == 2
+    assert ids['LogicalResourceId0'] == 'PhysicalResourceId0'
+    assert ids['LogicalResourceId1'] == 'PhysicalResourceId1'
+
+    client.describe_stacks.assert_called_with(StackName=stack)
+
+
 def test_main_replaces_and_calls_aws(mocker, stack, sysexit, arguments):
     arguments.extend(['awsie', stack, 'testcf:DeploymentBucket:', 'test2', 'test3'])
     get_resource_ids = mocker.patch.object(cli, 'get_resource_ids')

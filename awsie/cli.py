@@ -27,6 +27,7 @@ def main():
             print('Resource with logical ID "' + match_name + '" does not exist')
             sys.exit(1)
         return ids[match_name]
+
     command = ['aws'] + remaining
     if arguments.command:
         command = arguments.command.split()
@@ -56,7 +57,8 @@ def get_resource_ids(session, stack):
                 ids[resource['LogicalResourceId']] = resource['PhysicalResourceId']
 
         describe_stack = client.describe_stacks(StackName=stack)
-        for output in describe_stack['Stacks'][0]['Outputs']:
+        stack_outputs = describe_stack['Stacks'][0].get('Outputs', [])
+        for output in stack_outputs:
             ids[output['OutputKey']] = output['OutputValue']
     except botocore.exceptions.ClientError as e:
         print(e)
