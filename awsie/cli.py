@@ -8,7 +8,9 @@ from boto3.session import Session
 
 
 def main():
-    arguments = parse_arguments(sys.argv[1:])
+    parsed_arguments = parse_arguments(sys.argv[1:])
+    arguments = parsed_arguments[0]
+    remaining = parsed_arguments[1]
 
     stack = arguments.stack
 
@@ -25,14 +27,20 @@ def main():
             print('Resource with logical ID "' + match_name + '" does not exist')
             sys.exit(1)
         return ids[match_name]
-
-    new_args = ['aws'] + [re.sub('cf:([a-zA-Z0-9]+):', replacement, argument) for argument in sys.argv[1:]]
-    new_args.remove(stack)
+    command = ['aws'] + remaining
+    if arguments.command:
+        command = arguments.command.split()
+    else:
+        if arguments.region:
+            command.extend(['--region', arguments.region])
+        if arguments.profile:
+            command.extend(['--profile', arguments.profile])
+    new_args = [re.sub('cf:([a-zA-Z0-9]+):', replacement, argument) for argument in command]
 
     try:
         result = subprocess.call(new_args)
     except OSError:
-        print('Please make sure to install the AWSCLI with "pip install awscli"')
+        print('Please make sure "{}" is installed and available in the PATH'.format(command[0]))
         sys.exit(1)
 
     sys.exit(result)
@@ -62,7 +70,7 @@ def create_session(region, profile):
     return session
 
 
-def parse_arguments(args):
+def parse_arguments(arguments):
     parser = argparse.ArgumentParser(
         description='Call AWS with substituted CloudFormation values. The first positional argument is used as the '
                     'stack name, all other arguments are forwarded to the AWS CLI. --region and --profile are used '
@@ -72,5 +80,6 @@ def parse_arguments(args):
     parser.add_argument('stack', help='Stack to load resources from')
     parser.add_argument('--region')
     parser.add_argument('--profile')
-    args = parser.parse_known_args(args)
-    return args[0]
+    parser.add_argument('--command')
+    args = parser.parse_known_args(arguments)
+    return args
