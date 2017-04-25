@@ -63,7 +63,15 @@ aws s3 rm s3://formica-example-stack-deploymentbucket-1jjzisylxreh9/somefile --r
 
 ## Replacement syntax
 
-The replacement syntax is `cf:LOGICAL_ID:` and will replace LOGICAL_ID with the PhysicalId of the resource through the data returned from list-stack-resources.
+The replacement syntax is `cf:LOGICAL_ID:` and will replace LOGICAL_ID with the PhysicalId of the resource through the data returned from list-stack-resources. Make sure you don't forget the second colon at the end, its important to be able to separate the syntax when its embedded in another string.
+
+## Arbitrary commands
+
+You can also use `awsie` to run arbitrary commands with replaced values. Simply use the `--command` option to set the specific command and the options you want to use. Make sure the command is in quotes so its handled as one argument to awsie.
+
+```shell
+awsie stack --command "awslogs get cf:LogGroup: ALL"
+```
 
 ## Options
 
