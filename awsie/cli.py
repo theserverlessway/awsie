@@ -28,10 +28,10 @@ def main():
             sys.exit(1)
         return ids[match_name]
 
-    command = ['aws'] + remaining
     if arguments.command:
-        command = arguments.command.split()
+        command = remaining
     else:
+        command = ['aws'] + remaining
         if arguments.region:
             command.extend(['--region', arguments.region])
         if arguments.profile:
@@ -86,6 +86,6 @@ def parse_arguments(arguments):
     parser.add_argument('stack', help='Stack to load resources from')
     parser.add_argument('--region')
     parser.add_argument('--profile')
-    parser.add_argument('--command')
+    parser.add_argument('--command', action="store_true")
     args = parser.parse_known_args(arguments)
     return args
