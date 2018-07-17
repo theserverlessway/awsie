@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 import botocore
+from . import __version__
 from boto3.session import Session
 
 
@@ -83,6 +84,7 @@ def parse_arguments(arguments):
                     'to determine which stack to load the resources from and are passed on as well.\\nExample:\\n '
                     'awsie example-stack s3 ls s3://cf:DeploymentBucket:')
 
+    parser.add_argument('--version', action='version', version='{}'.format(__version__))
     parser.add_argument('stack', help='Stack to load resources from')
     parser.add_argument('--region')
     parser.add_argument('--profile')

@@ -1,10 +1,10 @@
-# AWSIE 
+# AWSIE
 
  [![Build Status](https://travis-ci.org/flomotlik/awsie.svg?branch=master)](https://travis-ci.org/flomotlik/awsie)
 [![PyPI version](https://badge.fury.io/py/awsie.svg)](https://pypi.python.org/pypi/awsie)
 [![license](https://img.shields.io/github/license/flomotlik/awsie.svg)](LICENSE)
 [![Coverage Status](https://coveralls.io/repos/github/flomotlik/awsie/badge.svg?branch=master)](https://coveralls.io/github/flomotlik/awsie?branch=master)
- 
+
 pronounced /ˈɒzi/ oz-ee like our great friends from down under.
 
 AWSIE is a CloudFormation aware wrapper on top of the AWS CLI. It help you to call an awscli command, but instead of the actual physical ID of the resource you set the logical CloudFormation template id or a CloudFormation Output which will be replaced when executing the actual command.
@@ -72,10 +72,16 @@ The replacement syntax is `cf:LOGICAL_ID:` and will replace LOGICAL_ID with the 
 
 ## Arbitrary commands
 
-You can also use `awsie` to run arbitrary commands with replaced values. Simply use the `--command` option to set the specific command and the options you want to use. Make sure the command is in quotes so its handled as one argument to awsie.
+You can also use `awsie` to run arbitrary commands with replaced values. Simply use the `--command` to tell awsie not to prepend your commands with `aws`.
 
 ```shell
-awsie stack --command "awslogs get cf:LogGroup: ALL"
+awsie somestack --command awslogs get cf:LogGroup: ALL
+```
+
+Sometimes you might want to add environment variables before the command or any other syntax that requires bash, in that case use `bash -c` as a command
+
+```shell
+awsie somestack --command bash -c "SOME_ENV=cf:LogGroup: somecommand"
 ```
 
 ## Options
@@ -84,5 +90,7 @@ awsie stack --command "awslogs get cf:LogGroup: ALL"
 
 
 * `stack`              Has to be the first positional argument and will be removed from call to the AWS cli.
-* `--profile PROFILE`         The AWS profile to use for the CloudFormation lookup, will be passed to the aws cli.
-* `--region REGION`           The AWS region to use for the CloudFormation lookup, will be passed to the aws cli.
+* `--profile PROFILE`  The AWS profile to use for the CloudFormation lookup, will be passed to the aws cli.
+* `--region REGION`    The AWS region to use for the CloudFormation lookup, will be passed to the aws cli.
+* `--command`          Run your own command instead of an aws cli command.
+* `--version`          Print the awsie version.
