@@ -2,19 +2,16 @@ language: python
 sudo: false
 
 python:
-- 2.7
-- 3.6
+  - 3.6
 
 install:
-- pip install -U -r build-requirements.txt
-- python setup.py develop
+  - pip install -U -r build-requirements.txt
+  - python setup.py develop
 
 script:
-- pycodestyle .
-- pyflakes .
-- py.test --cov=awsie tests
+  - make test
 
 after_success:
-- coveralls
+  - coveralls
 
 
