@@ -1,9 +1,9 @@
 # AWSIE
 
- [![Build Status](https://travis-ci.org/flomotlik/awsie.svg?branch=master)](https://travis-ci.org/flomotlik/awsie)
+ [![Build Status](https://travis-ci.org/theserverlessway/awsie.svg?branch=master)](https://travis-ci.org/theserverlessway/awsie)
 [![PyPI version](https://badge.fury.io/py/awsie.svg)](https://pypi.python.org/pypi/awsie)
-[![license](https://img.shields.io/github/license/flomotlik/awsie.svg)](LICENSE)
-[![Coverage Status](https://coveralls.io/repos/github/flomotlik/awsie/badge.svg?branch=master)](https://coveralls.io/github/flomotlik/awsie?branch=master)
+[![license](https://img.shields.io/github/license/theserverlessway/awsie.svg)](LICENSE)
+[![Coverage Status](https://coveralls.io/repos/github/theserverlessway/awsie/badge.svg?branch=master)](https://coveralls.io/github/theserverlessway/awsie?branch=master)
 
 pronounced /ˈɒzi/ oz-ee like our great friends from down under.
 
@@ -18,13 +18,13 @@ Awsie helps you to do that lookup and call the awscli without any potential for 
 Before installing make sure you have the awscli installed as awsie depends on it. We don't install it ourselves so you're able to install the exact version you want to use.
 
 ```shell
-pip install awscli
+pip3 install awscli
 ```
 
 awsie can be installed through pip:
 
 ```shell
-pip install awsie
+pip3 install awsie
 ```
 
 Alternatively you can clone this repository and run
@@ -53,6 +53,16 @@ and then want to list the content of the bucket you can use `awsie`:
 awsie example-stack s3 ls s3://cf:DeploymentBucket: --region us-west-1
 ```
 
+The first argument needs to be either the Stack Name or a yaml config file with a `stack` parameter that sets the name. This make it compatible to `formica` config files.
+
+```yaml
+stack: example-stack
+```
+
+```shell
+awsie stack.config.yaml s3 ls s3://cf:DeploymentBucket: --region us-west-1
+```
+
 or if you want to remove `somefile` from the `DeploymentBucket`:
 
 ```shell
@@ -65,6 +75,10 @@ which will replace `cf:DeploymentBucket:` with the actual name of the resource a
 aws s3 ls s3://formica-example-stack-deploymentbucket-1jjzisylxreh9 --region us-west-1
 aws s3 rm s3://formica-example-stack-deploymentbucket-1jjzisylxreh9/somefile --region us-west-1
 ```
+
+## Config File for Stack Name
+
+The first 
 
 ## Replacement syntax
 
@@ -89,7 +103,7 @@ awsie somestack --command bash -c "SOME_ENV=cf:LogGroup: somecommand"
 `awsie STACK_NAME`
 
 
-* `stack`              Has to be the first positional argument and will be removed from call to the AWS cli.
+* `stack`              Has to be the first positional argument and will be removed from call to the AWS cli. Can be either the stack name or a yaml file with a `stack` parameter.
 * `--profile PROFILE`  The AWS profile to use for the CloudFormation lookup, will be passed to the aws cli.
 * `--region REGION`    The AWS region to use for the CloudFormation lookup, will be passed to the aws cli.
 * `--command`          Run your own command instead of an aws cli command.

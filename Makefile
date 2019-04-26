@@ -16,7 +16,13 @@ build-dev:
 	docker-compose build awsie
 
 clean:
-	rm -fr dist
+	rm -fr dist build awsie.egg-info .pytest_cache
 
 dev: build-dev
 	docker-compose run awsie bash
+
+test:
+	pycodestyle .
+	pyflakes .
+	grep -r 'print(' awsie; [ "$$?" -gt 0 ]
+	py.test --cov=awsie tests

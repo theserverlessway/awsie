@@ -5,6 +5,10 @@ services:
     volumes:
       - .:/app
       - ~/.aws/:/root/.aws
+      - /app/awsie.egg-info
+      - /app/build
+      - /app/dist
+      - /app/.pytest_cache
     environment:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY

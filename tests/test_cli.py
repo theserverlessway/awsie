@@ -2,8 +2,8 @@ import sys
 
 import boto3
 import pytest
-
 from awsie import cli
+from path import Path
 
 
 @pytest.fixture()
@@ -33,6 +33,36 @@ def arguments(mocker):
     return arguments
 
 
+describe_stack = {
+    'Stacks': [
+        {'Outputs': [
+            {'OutputKey': 'Output_Key_1',
+             'OutputValue': 'Output_Value_1'},
+            {'OutputKey': 'Output_Key_2',
+             'OutputValue': 'Output_Value_2'}
+        ],
+        }
+    ]
+}
+
+
+@pytest.fixture
+def botocore_session(mocker):
+    return mocker.patch('botocore.session.Session')
+
+
+@pytest.fixture
+def session(mocker, botocore_session):
+    return mocker.patch('awsie.cli.Session')
+
+
+@pytest.fixture
+def client(session, mocker):
+    client_mock = mocker.Mock()
+    session.return_value.client.return_value = client_mock
+    return client_mock
+
+
 def test_profile_argument_parsing(stack, region):
     arguments = cli.parse_arguments([stack, '--region', region])[0]
     assert arguments.region == region
@@ -48,16 +78,16 @@ def test_stack_argument_parsing(stack):
     assert arguments.stack == stack
 
 
-def test_fails_without_stack(mocker):
+def test_fails_without_stack():
     with pytest.raises(SystemExit):
         cli.parse_arguments([])
 
 
-def test_session_creation(mocker, region, profile):
-    mocker.patch.object(cli, 'Session')
-    session = cli.create_session(region, profile)
-    cli.Session.assert_called_with(region_name=region, profile_name=profile)
-    assert session == cli.Session.return_value
+def test_session_creation(region, profile, session, botocore_session):
+    new_session = cli.create_session(region, profile)
+    botocore_session.assert_called_with(profile=profile)
+    session.assert_called_with(botocore_session=botocore_session(), region_name=region)
+    assert new_session == session()
 
 
 def test_loads_resources_and_outputs(mocker, stack):
@@ -74,18 +104,6 @@ def test_loads_resources_and_outputs(mocker, stack):
         resources_summaries.append(resources)
 
     client.get_paginator.return_value.paginate.return_value = resources_summaries
-
-    describe_stack = {
-        'Stacks': [
-            {'Outputs': [
-                {'OutputKey': 'Output_Key_1',
-                 'OutputValue': 'Output_Value_1'},
-                {'OutputKey': 'Output_Key_2',
-                 'OutputValue': 'Output_Value_2'}
-            ],
-            }
-        ]
-    }
 
     client.describe_stacks.return_value = describe_stack
 
@@ -182,7 +200,7 @@ def test_main_fails_for_missing_awscli(mocker, stack, arguments):
 
 
 def test_main_replaces_and_calls_arbitrary_command(mocker, stack, sysexit, arguments):
-    arguments.extend(['awsie', stack, '--command', 'testcommand testcf:DeploymentBucket:', '--region', 'test'])
+    arguments.extend(['awsie', stack, '--command', 'testcommand', 'testcf:DeploymentBucket:', '--region', 'test'])
 
     get_resource_ids = mocker.patch.object(cli, 'get_resource_ids')
     mocker.patch.object(cli, 'create_session')
@@ -193,4 +211,25 @@ def test_main_replaces_and_calls_arbitrary_command(mocker, stack, sysexit, argum
     cli.main()
 
     subprocess.call.assert_called_with(['testcommand', 'test1'])
+    sysexit.assert_called_with(subprocess.call.return_value)
+
+
+def test_config_file_for_stack_loading(mocker, client, stack, arguments, tmpdir, sysexit):
+    arguments.extend(['awsie', stack, '--command', 'testcommand'])
+
+    subprocess = mocker.patch.object(cli, 'subprocess')
+
+    client.get_paginator.return_value.paginate.return_value = []
+    client.describe_stacks.return_value = describe_stack
+
+    with Path(tmpdir):
+        with open('stack.config.yaml', 'w') as f:
+            f.write('stack: {}'.format(stack))
+
+        cli.main()
+
+    client.get_paginator.return_value.paginate.assert_called_with(StackName=stack)
+    client.describe_stacks.assert_called_with(StackName=stack)
+
+    subprocess.call.assert_called_with(['testcommand'])
     sysexit.assert_called_with(subprocess.call.return_value)
