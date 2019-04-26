@@ -7,6 +7,12 @@ import botocore
 from . import __version__
 from boto3.session import Session
 
+from botocore import credentials
+import botocore.session
+import os
+
+cli_cache = os.path.join(os.path.expanduser('~'), '.aws/cli/cache')
+
 
 def main():
     parsed_arguments = parse_arguments(sys.argv[1:])
@@ -68,13 +74,10 @@ def get_resource_ids(session, stack):
 
 
 def create_session(region, profile):
-    params = {}
-    if region:
-        params['region_name'] = region
-    if profile:
-        params['profile_name'] = profile
-    session = Session(**params)
-    return session
+    cached_session = botocore.session.Session(profile=profile)
+    cached_session.get_component('credential_provider').get_provider('assume-role').cache = credentials.JSONFileCache(
+        cli_cache)
+    return Session(botocore_session=cached_session, region_name=region)
 
 
 def parse_arguments(arguments):
