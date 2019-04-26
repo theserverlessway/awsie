@@ -1,17 +1,21 @@
 import argparse
+import logging
+import os
 import re
 import subprocess
 import sys
 
 import botocore
-from . import __version__
-from boto3.session import Session
-
-from botocore import credentials
 import botocore.session
-import os
+import yaml
+from boto3.session import Session
+from botocore import credentials
+
+from . import __version__
 
 cli_cache = os.path.join(os.path.expanduser('~'), '.aws/cli/cache')
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -20,18 +24,26 @@ def main():
     remaining = parsed_arguments[1]
 
     stack = arguments.stack
-
     try:
+        if os.path.isfile(stack):
+            with open(stack, 'r') as file:
+                config = yaml.safe_load(file)
+                stack = config.get('stack')
+
+            if not stack:
+                logger.info('Config file does not contain stack option.')
+                sys.exit(1)
+
         session = create_session(region=arguments.region, profile=arguments.profile)
         ids = get_resource_ids(session, stack)
     except Exception as e:
-        print(e)
+        logger.info(e)
         sys.exit(1)
 
     def replacement(matchobject):
         match_name = matchobject.group(1)
         if not ids.get(match_name):
-            print('Resource with logical ID "' + match_name + '" does not exist')
+            logger.info('Resource with logical ID "' + match_name + '" does not exist')
             sys.exit(1)
         return ids[match_name]
 
@@ -48,7 +60,7 @@ def main():
     try:
         result = subprocess.call(new_args)
     except OSError:
-        print('Please make sure "{}" is installed and available in the PATH'.format(command[0]))
+        logger.info('Please make sure "{}" is installed and available in the PATH'.format(command[0]))
         sys.exit(1)
 
     sys.exit(result)
@@ -68,7 +80,7 @@ def get_resource_ids(session, stack):
         for output in stack_outputs:
             ids[output['OutputKey']] = output['OutputValue']
     except botocore.exceptions.ClientError as e:
-        print(e)
+        logger.info(e)
         sys.exit(1)
     return ids
 
