@@ -36,6 +36,9 @@ def main():
 
         session = create_session(region=arguments.region, profile=arguments.profile)
         ids = get_resource_ids(session, stack)
+        if arguments.verbose:
+            for key, value in ids.items():
+                logger.info("{}: ")
     except Exception as e:
         logger.info(e)
         sys.exit(1)
@@ -104,5 +107,6 @@ def parse_arguments(arguments):
     parser.add_argument('--region')
     parser.add_argument('--profile')
     parser.add_argument('--command', action="store_true")
+    parser.add_argument('--verbose', action="store_true")
     args = parser.parse_known_args(arguments)
     return args

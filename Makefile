@@ -12,7 +12,7 @@ build-dev:
 	docker-compose build awsie
 
 clean:
-	rm -fr dist build awsie.egg-info .pytest_cache
+	rm -fr dist/* build/* awsie.egg-info/* .pytest_cache/*
 
 dev: build-dev
 	docker-compose run awsie bash
