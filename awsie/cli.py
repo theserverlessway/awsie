@@ -119,7 +119,8 @@ def create_session(region, profile):
 def parse_arguments(arguments):
     parser = argparse.ArgumentParser(
         description='Call AWS with substituted CloudFormation values. The first positional argument is used as the '
-                    'stack or config file name, all other arguments are forwarded to the AWS CLI. --region and --profile are used '
+                    'stack or config file name, all other arguments are forwarded to the AWS CLI. --region and '
+                    '--profile are used '
                     'to determine which stack to load the resources from and are passed on as well.\\nExample:\\n '
                     'awsie example-stack s3 ls s3://cf:DeploymentBucket:')
 
