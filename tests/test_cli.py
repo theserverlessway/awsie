@@ -90,33 +90,40 @@ def test_session_creation(region, profile, session, botocore_session):
     assert new_session == session()
 
 
-def test_loads_resources_and_outputs(mocker, stack):
+def test_loads_resources_and_outputs_and_exports(mocker, stack):
     session = mocker.Mock(spec=boto3.Session)
     client = session.client.return_value
 
-    resources_summaries = []
-    for i in range(2):
-        resources = {'StackResourceSummaries': [{
-            'LogicalResourceId': 'LogicalResourceId' + str(i),
-            'PhysicalResourceId': 'PhysicalResourceId' + str(i)
+    resources_mocks = mocker.Mock()
+    resources_mocks.paginate.return_value = [{'StackResourceSummaries': [{
+        'LogicalResourceId': 'LogicalResourceId' + str(i),
+        'PhysicalResourceId': 'PhysicalResourceId' + str(i)
+    }]} for i in range(2)]
 
-        }]}
-        resources_summaries.append(resources)
+    exports_mocks = mocker.Mock()
+    exports_mocks.paginate.return_value = [{'Exports': [{
+        'Name': 'ExportName' + str(i),
+        'Value': 'ExportValue' + str(i)
+    }]} for i in range(2)]
 
-    client.get_paginator.return_value.paginate.return_value = resources_summaries
+    client.get_paginator.side_effect = [resources_mocks, exports_mocks]
+    print([resources_mocks, exports_mocks])
 
     client.describe_stacks.return_value = describe_stack
 
     ids = cli.get_resource_ids(session=session, stack=stack)
-    assert len(ids) == 4
+    assert len(ids) == 6
     assert ids['LogicalResourceId0'] == 'PhysicalResourceId0'
     assert ids['LogicalResourceId1'] == 'PhysicalResourceId1'
     assert ids['Output_Key_1'] == 'Output_Value_1'
     assert ids['Output_Key_2'] == 'Output_Value_2'
+    assert ids['ExportName0'] == 'ExportValue0'
+    assert ids['ExportName1'] == 'ExportValue1'
 
     session.client.assert_called_with('cloudformation')
-    client.get_paginator.assert_called_with('list_stack_resources')
-    client.get_paginator.return_value.paginate.assert_called_with(StackName=stack)
+    client.get_paginator.assert_has_calls([mocker.call('list_stack_resources'), mocker.call('list_exports')])
+    resources_mocks.paginate.assert_called_with(StackName=stack)
+    exports_mocks.paginate.assert_called_with()
     client.describe_stacks.assert_called_with(StackName=stack)
 
 
@@ -214,6 +221,46 @@ def test_main_replaces_and_calls_arbitrary_command(mocker, stack, sysexit, argum
     sysexit.assert_called_with(subprocess.call.return_value)
 
 
+def test_no_subprocess_on_debug(mocker, stack, sysexit, arguments):
+    arguments.extend(['awsie', stack, '--debug'])
+
+    get_resource_ids = mocker.patch.object(cli, 'get_resource_ids')
+    mocker.patch.object(cli, 'create_session')
+    subprocess = mocker.patch.object(cli, 'subprocess')
+
+    get_resource_ids.return_value = {'DeploymentBucket': '1'}
+
+    cli.main()
+
+    subprocess.call.assert_not_called()
+    sysexit.assert_called_with(0)
+
+
+def test_called_with_verbose(mocker, stack, sysexit, arguments):
+    arguments.extend(['awsie', stack, '--verbose'])
+    mocker.patch.object(cli, 'create_session')
+    subprocess = mocker.patch.object(cli, 'subprocess')
+
+    cli.main()
+
+    subprocess.call.assert_called_with(['aws'])
+
+
+def test_no_stack_argument(mocker, stack, sysexit, arguments):
+    arguments.extend(['awsie', '--no-stack', 'ec2', 'something'])
+
+    get_resource_ids = mocker.patch.object(cli, 'get_resource_ids')
+    mocker.patch.object(cli, 'create_session')
+    subprocess = mocker.patch.object(cli, 'subprocess')
+
+    get_resource_ids.return_value = {}
+
+    cli.main()
+
+    subprocess.call.assert_called_with(['aws', 'ec2', 'something'])
+    sysexit.assert_called_with(subprocess.call.return_value)
+
+
 def test_config_file_for_stack_loading(mocker, client, stack, arguments, tmpdir, sysexit):
     arguments.extend(['awsie', stack, '--command', 'testcommand'])
 
@@ -228,7 +275,6 @@ def test_config_file_for_stack_loading(mocker, client, stack, arguments, tmpdir,
 
         cli.main()
 
-    client.get_paginator.return_value.paginate.assert_called_with(StackName=stack)
     client.describe_stacks.assert_called_with(StackName=stack)
 
     subprocess.call.assert_called_with(['testcommand'])
