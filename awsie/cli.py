@@ -23,9 +23,14 @@ def main():
     arguments = parsed_arguments[0]
     remaining = parsed_arguments[1]
 
-    stack = arguments.stack
+    if arguments.no_stack:
+        stack = ''
+        remaining = [arguments.stack] + remaining
+    else:
+        stack = arguments.stack
+
     try:
-        if os.path.isfile(stack):
+        if stack and os.path.isfile(stack):
             with open(stack, 'r') as file:
                 config = yaml.safe_load(file)
                 stack = config.get('stack')
@@ -36,9 +41,11 @@ def main():
 
         session = create_session(region=arguments.region, profile=arguments.profile)
         ids = get_resource_ids(session, stack)
-        if arguments.verbose:
+        if arguments.debug or arguments.verbose:
+            logger.info('Replacements:')
             for key, value in ids.items():
-                logger.info("{}: ")
+                logger.info("  {}: {}".format(key, value))
+            logger.info('')
     except Exception as e:
         logger.info(e)
         sys.exit(1)
@@ -58,10 +65,18 @@ def main():
             command.extend(['--region', arguments.region])
         if arguments.profile:
             command.extend(['--profile', arguments.profile])
-    new_args = [re.sub('cf:([a-zA-Z0-9]+):', replacement, argument) for argument in command]
+    new_args = [re.sub('cf:([a-zA-Z0-9:]+):', replacement, argument) for argument in command]
+
+    if arguments.debug or arguments.verbose:
+        logger.info('Command:')
+        logger.info('  ' + ' '.join(new_args))
+        logger.info('')
 
     try:
-        result = subprocess.call(new_args)
+        if arguments.debug:
+            result = 0
+        else:
+            result = subprocess.call(new_args)
     except OSError:
         logger.info('Please make sure "{}" is installed and available in the PATH'.format(command[0]))
         sys.exit(1)
@@ -71,17 +86,23 @@ def main():
 
 def get_resource_ids(session, stack):
     try:
-        client = session.client('cloudformation')
-        paginator = client.get_paginator('list_stack_resources').paginate(StackName=stack)
         ids = {}
-        for page in paginator:
-            for resource in page['StackResourceSummaries']:
-                ids[resource['LogicalResourceId']] = resource['PhysicalResourceId']
+        client = session.client('cloudformation')
+        if stack:
+            paginator = client.get_paginator('list_stack_resources').paginate(StackName=stack)
+            for page in paginator:
+                for resource in page.get('StackResourceSummaries', []):
+                    ids[resource['LogicalResourceId']] = resource['PhysicalResourceId']
 
-        describe_stack = client.describe_stacks(StackName=stack)
-        stack_outputs = describe_stack['Stacks'][0].get('Outputs', [])
-        for output in stack_outputs:
-            ids[output['OutputKey']] = output['OutputValue']
+            describe_stack = client.describe_stacks(StackName=stack)
+            stack_outputs = describe_stack['Stacks'][0].get('Outputs', [])
+            for output in stack_outputs:
+                ids[output['OutputKey']] = output['OutputValue']
+
+        paginator = client.get_paginator('list_exports').paginate()
+        for page in paginator:
+            for export in page.get('Exports', []):
+                ids[export['Name']] = export['Value']
     except botocore.exceptions.ClientError as e:
         logger.info(e)
         sys.exit(1)
@@ -98,15 +119,17 @@ def create_session(region, profile):
 def parse_arguments(arguments):
     parser = argparse.ArgumentParser(
         description='Call AWS with substituted CloudFormation values. The first positional argument is used as the '
-                    'stack name, all other arguments are forwarded to the AWS CLI. --region and --profile are used '
+                    'stack or config file name, all other arguments are forwarded to the AWS CLI. --region and --profile are used '
                     'to determine which stack to load the resources from and are passed on as well.\\nExample:\\n '
                     'awsie example-stack s3 ls s3://cf:DeploymentBucket:')
 
     parser.add_argument('--version', action='version', version='{}'.format(__version__))
     parser.add_argument('stack', help='Stack to load resources from')
-    parser.add_argument('--region')
-    parser.add_argument('--profile')
-    parser.add_argument('--command', action="store_true")
-    parser.add_argument('--verbose', action="store_true")
+    parser.add_argument('--region', help='The AWS Region to use')
+    parser.add_argument('--profile', help='The AWS Profile to use')
+    parser.add_argument('--command', action="store_true", help="If you run a non AWS CLI command")
+    parser.add_argument('--no-stack', action="store_true", help="If you only use CFN Exports and no Stack data")
+    parser.add_argument('--verbose', action="store_true", help="Print debug output before running the command")
+    parser.add_argument('--debug', action="store_true", help="Print debug output and don't run the command")
     args = parser.parse_known_args(arguments)
     return args
