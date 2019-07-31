@@ -79,10 +79,10 @@ The Regex used is greedy, so `cf:vpc:VPC:` will look for `vpc:VPC` in the variab
 
 ## Arbitrary commands
 
-You can also use `awsie` to run arbitrary commands with replaced values. Simply use the `--command` option to set the specific command and the options you want to use. Make sure the command is in quotes so its handled as one argument to awsie.
+You can also use `awsie` to run arbitrary commands with replaced values. Simply use the `--command` option so aws isn't prepended.
 
 ```shell
-awsie STACK_NAME --command "awslogs get cf:LogGroup: ALL"
+awsie STACK_NAME --command awsinfo logs cf:LogGroup:
 ```
 
 ## Config File
