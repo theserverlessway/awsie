@@ -15,22 +15,12 @@ Awsie helps you to do that lookup and call the awscli without any potential for 
 
 ## Installation
 
-Before installing make sure you have the awscli installed as awsie depends on it. We don't install it ourselves so you're able to install the exact version you want to use.
+Before installing make sure you have the `awscli` installed as awsie depends on it. We don't install it ourselves so you're able to install the exact version you want to use.
+
+Awsie can be installed through pip:
 
 ```shell
-pip3 install awscli
-```
-
-awsie can be installed through pip:
-
-```shell
-pip3 install awsie
-```
-
-Alternatively you can clone this repository and run
-
-```shell
-python setup.py install
+pip3 install -U awscli awsie 
 ```
 
 ## Quick example
@@ -53,58 +43,6 @@ and then want to list the content of the bucket you can use `awsie`:
 awsie example-stack s3 ls s3://cf:DeploymentBucket: --region us-west-1
 ```
 
-The first argument needs to be either the Stack Name or a yaml config file with a `stack` parameter that sets the name. This make it compatible to `formica` config files.
+## Documentation
 
-```yaml
-stack: example-stack
-```
-
-```shell
-awsie stack.config.yaml s3 ls s3://cf:DeploymentBucket: --region us-west-1
-```
-
-or if you want to remove `somefile` from the `DeploymentBucket`:
-
-```shell
-awsie example-stack s3 rm s3://cf:DeploymentBucket:/somefile --region us-west-1
-```
-
-which will replace `cf:DeploymentBucket:` with the actual name of the resource and run the awscli with all arguments you passed to awsie, except for the stack-name (which has to be the first argument):
-
-```shell
-aws s3 ls s3://formica-example-stack-deploymentbucket-1jjzisylxreh9 --region us-west-1
-aws s3 rm s3://formica-example-stack-deploymentbucket-1jjzisylxreh9/somefile --region us-west-1
-```
-
-## Config File for Stack Name
-
-The first 
-
-## Replacement syntax
-
-The replacement syntax is `cf:LOGICAL_ID:` and will replace LOGICAL_ID with the PhysicalId of the resource through the data returned from list-stack-resources. Make sure you don't forget the second colon at the end, its important to be able to separate the syntax when its embedded in another string.
-
-## Arbitrary commands
-
-You can also use `awsie` to run arbitrary commands with replaced values. Simply use the `--command` to tell awsie not to prepend your commands with `aws`.
-
-```shell
-awsie somestack --command awslogs get cf:LogGroup: ALL
-```
-
-Sometimes you might want to add environment variables before the command or any other syntax that requires bash, in that case use `bash -c` as a command
-
-```shell
-awsie somestack --command bash -c "SOME_ENV=cf:LogGroup: somecommand"
-```
-
-## Options
-
-`awsie STACK_NAME`
-
-
-* `stack`              Has to be the first positional argument and will be removed from call to the AWS cli. Can be either the stack name or a yaml file with a `stack` parameter.
-* `--profile PROFILE`  The AWS profile to use for the CloudFormation lookup, will be passed to the aws cli.
-* `--region REGION`    The AWS region to use for the CloudFormation lookup, will be passed to the aws cli.
-* `--command`          Run your own command instead of an aws cli command.
-* `--version`          Print the awsie version.
+Check out the full [Documentation and Quickstart on TheServerlessWay.com](https://theserverlessway.com/tools/awsie/)
