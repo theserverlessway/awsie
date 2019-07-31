@@ -5,8 +5,7 @@ release-docker:
 release-pypi:
 	docker-compose run awsie bash -c "python setup.py sdist bdist_wheel && pandoc --from=markdown --to=rst --output=build/README.rst README.md && twine upload dist/*"
 
-release:
-	release-pypi release-docker
+release: release-pypi release-docker
 
 build-dev:
 	docker-compose build awsie
