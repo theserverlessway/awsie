@@ -7,7 +7,7 @@ disable_pagination: true
 
 [![Build Status](https://travis-ci.org/theserverlessway/awsie.svg?branch=master)](https://travis-ci.org/theserverlessway/awsie)
 [![PyPI version](https://badge.fury.io/py/awsie.svg)](https://pypi.python.org/pypi/awsie)
-[![license](https://img.shields.io/github/license/theserverlessway/awsie.svg)](LICENSE)
+[![license](https://img.shields.io/github/license/theserverlessway/awsie.svg)](https://github.com/theserverlessway/awsie/blob/master/LICENSE)
 [![Coverage Status](https://coveralls.io/repos/github/theserverlessway/awsie/badge.svg?branch=master)](https://coveralls.io/github/theserverlessway/awsie?branch=master)
 
 pronounced /ˈɒzi/ oz-ee like our great friends from down under.
