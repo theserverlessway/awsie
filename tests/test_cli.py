@@ -184,6 +184,20 @@ def test_main_replaces_and_calls_aws_with_profile_and_region(mocker, stack, syse
     sysexit.assert_called_with(subprocess.call.return_value)
 
 
+def test_captures_colon_non_greedy(mocker, stack, sysexit, arguments):
+    arguments.extend(['awsie', stack, 'testcf:A:B:C::12345'])
+    get_resource_ids = mocker.patch.object(cli, 'get_resource_ids')
+    mocker.patch.object(cli, 'create_session')
+    subprocess = mocker.patch.object(cli, 'subprocess')
+
+    get_resource_ids.return_value = {'A:B:C': 'Replace'}
+
+    cli.main()
+
+    subprocess.call.assert_called_with(['aws', 'testReplace:12345'])
+    sysexit.assert_called_with(subprocess.call.return_value)
+
+
 def test_main_fails_for_missing_replacement(mocker, stack):
     arguments = ['awsie', stack, 'testcf:DeploymentBucket:']
     mocker.patch.object(sys, 'argv', arguments)

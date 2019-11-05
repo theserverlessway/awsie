@@ -75,7 +75,7 @@ aws s3 rm s3://formica-example-stack-deploymentbucket-1jjzisylxreh9/somefile --r
 
 The replacement syntax is `cf:LOGICAL_ID:` and will insert the PhysicalId of the resource with LOGICAL_ID through the data returned from the list-stack-resources API call. Make sure you don't forget the second colon at the end, its important to be able to separate the syntax when its embedded in another string.
 
-The Regex used is greedy, so `cf:vpc:VPC:` will look for `vpc:VPC` in the variables. That can lead to issues if you want to combine two values directly, e.g. `cf:vpc:VPC1:cf:vpc:VPC2:` which will get `vpc:VPC1:cf:vpc:VPC2` as the replacement key. You need to put a chracter other than `a-zA-Z0-9:` between the values to separate them, e.g. `cf:vpc:VPC1:-cf:vpc:VPC2:`. This is almost never going to be a problem, just in case.
+The Regex used is greedy, so `cf:vpc:VPC:` will look for `vpc:VPC` in the variables. That can lead to issues if you want to combine two values directly, e.g. `cf:vpc:VPC1:cf:vpc:VPC2:` which will get `vpc:VPC1:cf:vpc:VPC2` as the replacement key. You need to put a character other than `a-zA-Z0-9:` between the values to separate them, e.g. `cf:vpc:VPC1:-cf:vpc:VPC2:`.
 
 ## Arbitrary commands
 
