@@ -185,12 +185,26 @@ def test_main_replaces_and_calls_aws_with_profile_and_region(mocker, stack, syse
 
 
 def test_captures_colon_non_greedy(mocker, stack, sysexit, arguments):
-    arguments.extend(['awsie', stack, 'testcf:A:B:C::12345'])
+    arguments.extend(['awsie', stack, 'testcf:A:B:C::12345_12345:'])
     get_resource_ids = mocker.patch.object(cli, 'get_resource_ids')
     mocker.patch.object(cli, 'create_session')
     subprocess = mocker.patch.object(cli, 'subprocess')
 
     get_resource_ids.return_value = {'A:B:C': 'Replace'}
+
+    cli.main()
+
+    subprocess.call.assert_called_with(['aws', 'testReplace:12345_12345:'])
+    sysexit.assert_called_with(subprocess.call.return_value)
+
+
+def test_captures_special_characters(mocker, stack, sysexit, arguments):
+    arguments.extend(['awsie', stack, 'testcf:A-B:C-D:F::12345'])
+    get_resource_ids = mocker.patch.object(cli, 'get_resource_ids')
+    mocker.patch.object(cli, 'create_session')
+    subprocess = mocker.patch.object(cli, 'subprocess')
+
+    get_resource_ids.return_value = {'A-B:C-D:F': 'Replace'}
 
     cli.main()
 

@@ -65,7 +65,7 @@ def main():
             command.extend(['--region', arguments.region])
         if arguments.profile:
             command.extend(['--profile', arguments.profile])
-    new_args = [re.sub('cf:([a-zA-Z0-9]+(:[a-zA-Z0-9]+)*):', replacement, argument) for argument in command]
+    new_args = [re.sub('cf:([a-zA-Z0-9-]+(:[a-zA-Z0-9-]+)*):', replacement, argument) for argument in command]
 
     if arguments.debug or arguments.verbose:
         logger.info('Command:')
