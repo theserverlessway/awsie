@@ -22,6 +22,7 @@ def main():
     parsed_arguments = parse_arguments(sys.argv[1:])
     arguments = parsed_arguments[0]
     remaining = parsed_arguments[1]
+    stack_region = arguments.region
 
     if arguments.no_stack:
         stack = ''
@@ -34,12 +35,15 @@ def main():
             with open(stack, 'r') as file:
                 config = yaml.safe_load(file)
                 stack = config.get('stack')
+                config_region = config.get('region')
+                if config_region:
+                    stack_region = config_region
 
             if not stack:
                 logger.info('Config file does not contain stack option.')
                 sys.exit(1)
 
-        session = create_session(region=arguments.region, profile=arguments.profile)
+        session = create_session(region=stack_region, profile=arguments.profile)
         ids = get_resource_ids(session, stack)
         if arguments.debug or arguments.verbose:
             logger.info('Replacements:')
